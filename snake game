@@ -1,0 +1,138 @@
+import pygame 
+import random
+
+# Initialize
+pygame.init()
+
+# Window settings
+width, height = 800, 600
+win = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Multiplayer Snake Game 🐍🐍")
+
+# Colors
+WHITE = (255, 255, 255)
+GREEN = (0, 200, 0)
+BLUE = (0, 0, 200)
+RED = (200, 0, 0)
+BLACK = (0, 0, 0)
+
+# Snake & Game settings
+block_size = 20
+speed = 15
+font = pygame.font.SysFont(None, 35)
+
+clock = pygame.time.Clock()
+
+def draw_snake(snake_list, color):
+    for segment in snake_list:
+        pygame.draw.rect(win, color, [segment[0], segment[1], block_size, block_size])
+
+def show_score(score1, score2):
+    text1 = font.render(f"P1 Score: {score1}", True, BLACK)
+    text2 = font.render(f"P2 Score: {score2}", True, BLACK)
+    win.blit(text1, [10, 10])
+    win.blit(text2, [width - 180, 10])
+
+def game_loop():
+    # Snake 1
+    x1, y1 = 100, 100
+    x1_change, y1_change = 0, 0
+    snake1 = [[x1, y1]]
+    len1 = 1
+
+    # Snake 2
+    x2, y2 = 700, 500
+    x2_change, y2_change = 0, 0
+    snake2 = [[x2, y2]]
+    len2 = 1
+
+    # Food
+    foodx = round(random.randrange(0, width - block_size) / 20.0) * 20
+    foody = round(random.randrange(0, height - block_size) / 20.0) * 20
+
+    game_over = False
+
+    while not game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_over = True
+            elif event.type == pygame.KEYDOWN:
+                # Player 1 (Arrow keys)
+                if event.key == pygame.K_LEFT:
+                    x1_change, y1_change = -block_size, 0
+                elif event.key == pygame.K_RIGHT:
+                    x1_change, y1_change = block_size, 0
+                elif event.key == pygame.K_UP:
+                    x1_change, y1_change = 0, -block_size
+                elif event.key == pygame.K_DOWN:
+                    x1_change, y1_change = 0, block_size
+                # Player 2 (WASD)
+                elif event.key == pygame.K_a:
+                    x2_change, y2_change = -block_size, 0
+                elif event.key == pygame.K_d:
+                    x2_change, y2_change = block_size, 0
+                elif event.key == pygame.K_w:
+                    x2_change, y2_change = 0, -block_size
+                elif event.key == pygame.K_s:
+                    x2_change, y2_change = 0, block_size
+
+        # Update positions
+        x1 += x1_change
+        y1 += y1_change
+        x2 += x2_change
+        y2 += y2_change
+
+        # Check wall collision
+        if x1 < 0 or x1 >= width or y1 < 0 or y1 >= height:
+            game_over = True
+        if x2 < 0 or x2 >= width or y2 < 0 or y2 >= height:
+            game_over = True
+
+        # Update snakes
+        snake1.append([x1, y1])
+        if len(snake1) > len1:
+            del snake1[0]
+
+        snake2.append([x2, y2])
+        if len(snake2) > len2:
+            del snake2[0]
+
+        # Check self-collision
+        if [x1, y1] in snake1[:-1] or [x1, y1] in snake2:
+            game_over = True
+        if [x2, y2] in snake2[:-1] or [x2, y2] in snake1:
+            game_over = True
+
+        # Eating food
+        if x1 == foodx and y1 == foody:
+            len1 += 1
+            foodx = round(random.randrange(0, width - block_size) / 20.0) * 20
+            foody = round(random.randrange(0, height - block_size) / 20.0) * 20
+
+        if x2 == foodx and y2 == foody:
+            len2 += 1
+            foodx = round(random.randrange(0, width - block_size) / 20.0) * 20
+            foody = round(random.randrange(0, height - block_size) / 20.0) * 20
+
+        # Drawing
+        win.fill(WHITE)
+        pygame.draw.rect(win, RED, [foodx, foody, block_size, block_size])
+        draw_snake(snake1, GREEN)
+        draw_snake(snake2, BLUE)
+        show_score(len1 - 1, len2 - 1)
+        pygame.display.update()
+        clock.tick(speed)
+
+    # End screen
+    win.fill(WHITE)
+    over_text = font.render("Game Over! Press Q to Quit", True, RED)
+    win.blit(over_text, [width / 3, height / 2])
+    pygame.display.update()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_q):
+                pygame.quit()
+                return
+
+game_loop()
